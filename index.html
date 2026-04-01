@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUITEMS | Attendance Assurance</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --navy: #002e5b;
+            --orange: #f7941e;
+            --glass: rgba(255, 255, 255, 0.92);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .main-wrapper {
+            min-height: 100vh;
+            /* Update 'bg.webp' here if your filename is different */
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('bg.webp');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            margin-bottom: 40px;
+        }
+
+        .calculator-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 35px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            display: block;
+            color: var(--navy);
+            font-size: 11px;
+            font-weight: 900;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--orange);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(247, 148, 30, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--orange);
+            color: var(--navy);
+            border: none;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background: #ffaa42;
+            transform: translateY(-2px);
+        }
+
+        /* Results Display */
+        .result-section {
+            margin-top: 30px;
+            text-align: center;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 25px;
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 180px;
+            margin-bottom: 20px;
+        }
+
+        .chart-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--navy);
+        }
+
+        .chart-overlay h2 { margin: 0; font-size: 2.2rem; font-weight: 900; }
+
+        .status-badge {
+            font-weight: 900;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .details-text {
+            color: #444;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Disclaimer Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .footer {
+            margin-top: auto;
+            padding: 30px;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="disclaimerModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--navy); margin-top: 0;">DISCLAIMER</h2>
+            <p style="color: #666; font-size: 15px; margin-bottom: 25px;">
+                This tool is for personal reference and estimation. Always verify official attendance records via the BUITEMS CMS.
+            </p>
+            <button onclick="closeDisclaimer()" class="submit-btn">I UNDERSTAND</button>
+        </div>
+    </div>
+
+    <div class="main-wrapper">
+        <header>
+            <h1>BUITEMS EXAM ATTENDANCE ASSURANCE</h1>
+        </header>
+
+        <div class="calculator-card">
+            <div class="field">
+                <label>TOTAL CLASSES HELD</label>
+                <input type="number" id="total" placeholder="e.g. 40">
+            </div>
+            <div class="field">
+                <label>YOUR ATTENDANCE</label>
+                <input type="number" id="attended" placeholder="e.g. 32">
+            </div>
+            <button onclick="processAttendance()" class="submit-btn">ANALYZE ELIGIBILITY</button>
+
+            <div id="results" class="result-section">
+                <div class="chart-container">
+                    <canvas id="attendanceChart"></canvas>
+                    <div class="chart-overlay">
+                        <h2 id="percentDisplay">0%</h2>
+                    </div>
+                </div>
+                
+                <div id="statusBadge" class="status-badge"></div>
+                <div id="messageDisplay" class="details-text"></div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2026 Aazain Jan. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        let chart = null;
+
+        // Manage Disclaimer
+        function closeDisclaimer() {
+            document.getElementById('disclaimerModal').style.display = 'none';
+            sessionStorage.setItem('hasSeenDisclaimer', 'true');
+        }
+
+        window.onload = function() {
+            if (!sessionStorage.getItem('hasSeenDisclaimer')) {
+                document.getElementById('disclaimerModal').style.display = 'flex';
+            }
+        };
+
+        // Main Calculation Logic
+        function processAttendance() {
+            const total = parseInt(document.getElementById('total').value);
+            const attended = parseInt(document.getElementById('attended').value);
+
+            if (isNaN(total) || isNaN(attended) || total <= 0 || attended < 0 || attended > total) {
+                alert("Please enter valid numbers (Attendance cannot be more than total).");
+                return;
+            }
+
+            const percentage = (attended / total) * 100;
+            const requiredCount = Math.ceil(0.75 * total);
+            const isSafe = percentage >= 75;
+            const gap = Math.abs(attended - requiredCount);
+
+            // Display results container
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('percentDisplay').innerText = Math.round(percentage) + "%";
+
+            // Update Status and Messages
+            const badge = document.getElementById('statusBadge');
+            const msg = document.getElementById('messageDisplay');
+
+            if (isSafe) {
+                badge.innerText = "STATUS: ELIGIBLE";
+                badge.style.color = "#27ae60";
+                msg.innerHTML = `You are <strong>${gap}</strong> classes above the minimum requirement. Keep it up!`;
+            } else {
+                badge.innerText = "STATUS: INELIGIBLE";
+                badge.style.color = "#f7941e";
+                msg.innerHTML = `You are currently <strong>${gap}</strong> classes short of the 75% mark for these ${total} classes.<br><br>
+                                <small>You should have attended at least <strong>${requiredCount}</strong> classes by now.</small>`;
+            }
+
+            // Update Chart
+            if (chart) chart.destroy();
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [percentage, 100 - percentage],
+                        backgroundColor: [isSafe ? '#27ae60' : '#f7941e', 'rgba(0,0,0,0.05)'],
+                        borderWidth: 0,
+                        cutout: '80%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    animation: { duration: 1500, easing: 'easeOutQuart' }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
